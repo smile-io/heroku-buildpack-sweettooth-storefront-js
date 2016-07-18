@@ -139,11 +139,6 @@ echo "-----> Cleaning node-gyp and npm artifacts"
 rm -rf "$BUILD_DIR/.node-gyp"
 rm -rf "$BUILD_DIR/.npm"
 
-# If Procfile is absent copy it
-echo "-----> Copying scripts to application slug"
-# mkdir -p $BUILD_DIR/bin
-cp -n $BP_DIR/scripts/Procfile $BUILD_DIR/Procfile
-
 echo "-----> Copying static.json to application slug"
 cp -n $BP_DIR/scripts/static.json $BUILD_DIR/static.json
 
