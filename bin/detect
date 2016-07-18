@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if [ -f $1/package.json ]; then
+  echo "Node.js" && exit 0
+else
+  echo "Node.js app not detected" && exit 1
+fi

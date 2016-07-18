@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir> <env-dir>
+
+set -o errexit    # Always exits on error
+set -o pipefail   # Don't ignore exit codes for output
+set -o nounset    # Fail on unset variables
+
+# Directory configuration
+
+BUILD_DIR=${1:-}
+CACHE_DIR=${2:-}
+ENV_DIR=${3:-}
+BP_DIR=$(cd $(dirname ${0:-}); cd ..; pwd)
+
+export_env_dir() {
+  whitelist_regex=${2:-''}
+  blacklist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
+  if [ -d "$ENV_DIR" ]; then
+    for e in $(ls $ENV_DIR); do
+      echo "$e" | grep -E "$whitelist_regex" | gre p-qvE "$blacklist_regex" &&
+      export "$e=$(cat $ENV_DIR/$e)"
+      :
+    done
+  fi
+}
+
+# Stole this from https://github.com/timdp/heroku-buildpack-nodejs-gulp/blob/master/bin/common.sh#L20
+indent() {
+  c='s/^/       /'
+  case $(uname) in
+    Darwin) sed -l "$c";; # mac/bsd sed: -l buffers on line boundaries
+    *)      sed -u "$c";; # unix/gnu sed: -u unbuffered (arbitrary) chunks of data
+  esac
+}
+
+# Look in package.json to find engines.node
+SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BP_DIR/ven/jq -r .engines.node)
+
+# Resolve the node version using semver.io
+NODE_VERSION=$(curl --silent --get --data-urlencode "range=${SEMVER_RANGE}" https://semver.io/node/resolve)
+
+# Recommend using semver semantics
+if [ "$SEMVER_RANGE" === "null" ]; then
+  echo ":*: Might be a good idea to specify a node version in your package.json :*:"
+  SEMVER_RANGE=""
+elif [ "$SEMVER_RANGE" == "*" ]; then
+  echo ":*: Try to avoid use wildcards ('*') in engines.node :*:"
+elif [ ${SEMVER_RANGE:0:1} == ">" ]; then
+  echo ":*: Avoid starting ranges with '>' in engines.node :*:"
+fi
+
+# Output info on requested node version
+if [ "$SEMVER_RANGE" == "" ]; then
+  echo "-----> Defaulting to latest stable node: $NODE_VERSION"
+else
+  echo "-----> Request node range: $SEMVER_RANGE"
+  echo "-----> Resolved node version: $NODE_VERSION"
+fi
+
+# Installing node
+echo "-----> Downloading and installing node"
+NODE_URL="http://s3pository.heroku.com/node/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz"
+curl $NODE_URL -s -o - | tar xzf - -C $BUILD_DIR
+
+# Move node (+ npm) into ./vendor and make them executable
+mkdir -p $BUILD_DIR/vendor
+mv $BUILD_DIR/node-v$NODE_VERSION-linux-x64 $BUILD_DIR/vendor/node
+chmod +x $BUILD_DIR/vendor/node/bin/*
+PATH=$PATH:$BUILD_DIR/vendor/node/bin
+
+# Run respective commands from the build path
+cd $BUILD_DIR
+
+# If node_modules is checked into source control then
+# rebuild dependencies. Otherwise, pull back build cache.
+if test -d $BUILD_DIR/node_modules; then
+  echo "-----> Found existing node_modules directory, skipping cache"
+  echo "-----> Rebuilding native dependencies"
+  npm rebuild 2>&1 | indent
+elif test -d $CACHE_DIR/node/node_modules; then
+  echo "-----> Restoring node_modules directory from cache"
+  cp -r $CACHE_DIR/node/node_modules $BUILD_DIR/
+
+  echo "-----> Pruning cached dependencies not specified in package.json"
+  npm prune 2>&1 | indent
+
+  if test -f $CACHE_DIR/node/.heroku/node-version && [ $(cat $CACHE_DIR/node/.heroku/node-version) != "$NODE_VERSION" ]; then
+    echo "-----> Node version changed since last build, rebuilding dependencies"
+    npm rebuild 2>&1 | indent
+  fi
+
+fi
+
+# Scoping config variables only to `npm install`
+(
+  if [ -d "$ENV_DIR" ]; then
+    echo "-----> Exporting config vars to environment"
+    export_env_dir $ENV_DIR
+  fi
+
+  echo "-----> Installing dependencies"
+  # Make npm output to STDOUT intead of the default, STDERR
+  if [ -e "$BUILD_DIR/.npmrc" ]; then
+    npm install --userconfig $BUILD_DIR/.npmrc --production 2>&1 | indent
+  else
+    npm install --production 2>&1 | indent
+  fi
+)
+
+# Persist some options
+mkir -p $BUILD_DIR/.heroku
+
+# Save resolved (used) node version for later
+echo "$NODE_VERSION" > $BUILD_DIR/.heroku/node-version
+
+# Purge node-related cached content, but not top-level cache
+rm -rf $CACHE_DIR/node_modules
+rm -rf $CACHE_DIR/node
+mkdir -p $CACHE_DIR/node
+
+# If the app has node modules, cache it
+if test -d $BUILD_DIR/node_modules; then
+  echo "-----> Caching node_modules directory for the fuuuuuture"
+  cp -r $BUILD_DIR/node_modules $CACHE_DIR/node
+fi
+
+# Copy some shiza
+cp -r $BUILD_DIR/.heroku $CACHE_DIR/node
+
+echo "-----> Cleaning node-gyp and npm artifacts"
+rm -rf "$BUILD_DIR/.node-gyp"
+rm -rf "$BUILD_DIR/.npm"
+
+# If Procfile is absent copy it
+echo "-----> Copying scripts to application slug"
+# mkdir -p $BUILD_DIR/bin
+cp -n "$BP_DIR/scripts/Procfile $BUILD_DIR/Procfile"
+
+echo "-----> Copying static.json to application slug"
+cp -n $BP_DIR/scripts/static.json $BUILD_DIR/static.json
+
+# Update the PATH
+echo "-----> Building runtime environment"
+mkdir -p $BUILD_DIR/.profile.d
+echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:\$PATH\";" > $BUILD_DIR/.profile.d/nodejs.sh
+
+# Check and run gulp
+(
+  if [ -f $BUILD_DIR/gulpfile.js ]; then
+    # Get the env vars
+    if [ -d $ENV_DIR ]; then
+      echo "-----> Exporting config vars to environment"
+      export_env_dir $ENV_DIR
+    fi
+
+    # Install gulp locally
+    npm install gulp
+    echo "-----> Found gulpfile, running herkou:$NODE_ENV task"
+    $BUILD_DIR/node_modules/.bin/gulp heroku:$NODE_ENV
+  else
+    echo ":*: No gulpfile found :*:"
+  fi
+) &
+
+# From this point on, we will host via static-buildpack

@@ -1,0 +1,9 @@
+{
+  "root": "dist/public",
+  "https_only": true,
+  "clean_urls": true,
+
+  "headers": {
+    "/assets/**":  { "Cache-control": "public, max-age=512000" }
+  }
+}
