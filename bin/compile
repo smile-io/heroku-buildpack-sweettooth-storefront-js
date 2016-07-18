@@ -34,8 +34,8 @@ indent() {
 }
 
 # Look in package.json to find engines.node
-ls $BP_DIR/vendor
-SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BUILD_DIR/vendor/jq -r .engines.node)
+ls $BP_DIR/
+SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .engines.node)
 # SEMVER_RANGE=$(cat $BUILD_DIR/package.json | )
 
 # Resolve the node version using semver.io
