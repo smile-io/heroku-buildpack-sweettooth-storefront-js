@@ -109,7 +109,7 @@ fi
 )
 
 # Persist some options
-mkir -p $BUILD_DIR/.heroku
+mkdir -p $BUILD_DIR/.heroku
 
 # Save resolved (used) node version for later
 echo "$NODE_VERSION" > $BUILD_DIR/.heroku/node-version
