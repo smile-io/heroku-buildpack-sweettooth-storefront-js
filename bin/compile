@@ -33,6 +33,7 @@ indent() {
   esac
 }
 
+ls $ENV_DIR
 # Look in package.json to find engines.node
 SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .engines.node)
 
@@ -40,7 +41,7 @@ SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .engines.node)
 NODE_VERSION=$(curl --silent --get --data-urlencode "range=${SEMVER_RANGE}" https://semver.io/node/resolve)
 
 # Recommend using semver semantics
-if [ "$SEMVER_RANGE" === "null" ]; then
+if [ "$SEMVER_RANGE" == "null" ]; then
   echo ":*: Might be a good idea to specify a node version in your package.json :*:"
   SEMVER_RANGE=""
 elif [ "$SEMVER_RANGE" == "*" ]; then
