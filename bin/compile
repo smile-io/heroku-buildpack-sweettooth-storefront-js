@@ -34,9 +34,7 @@ indent() {
 }
 
 # Look in package.json to find engines.node
-ls $BP_DIR/
 SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .engines.node)
-# SEMVER_RANGE=$(cat $BUILD_DIR/package.json | )
 
 # Resolve the node version using semver.io
 NODE_VERSION=$(curl --silent --get --data-urlencode "range=${SEMVER_RANGE}" https://semver.io/node/resolve)
@@ -119,6 +117,14 @@ echo "$NODE_VERSION" > $BUILD_DIR/.heroku/node-version
 rm -rf $CACHE_DIR/node_modules
 rm -rf $CACHE_DIR/node
 mkdir -p $CACHE_DIR/node
+
+if [ ! -e $BUILD_DIR/Procfile ]; then
+  NPM_START=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .scripts.start)
+  echo "-----> No Procfile found, adding npm start value to new Procfile"
+  echo "web: npm start" > $BUILD_DIR/Procfile
+else
+  echo "-----> Procfile exists"
+fi
 
 # If the app has node modules, cache it
 if test -d $BUILD_DIR/node_modules; then
