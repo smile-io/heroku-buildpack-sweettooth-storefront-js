@@ -7,10 +7,10 @@ set -o nounset    # Fail on unset variables
 
 # Directory configuration
 
-BUILD_DIR=${1:-}
-CACHE_DIR=${2:-}
-ENV_DIR=${3:-}
-BP_DIR=$(cd $(dirname ${0:-}); cd ..; pwd)
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+BP_DIR=$(cd $(dirname $0); cd ..; pwd)
 
 export_env_dir() {
   whitelist_regex=${2:-''}
@@ -34,8 +34,8 @@ indent() {
 }
 
 # Look in package.json to find engines.node
-# SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .engines.node)
 SEMVER_RANGE=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .engines.node)
+# SEMVER_RANGE=$(cat $BUILD_DIR/package.json | )
 
 # Resolve the node version using semver.io
 NODE_VERSION=$(curl --silent --get --data-urlencode "range=${SEMVER_RANGE}" https://semver.io/node/resolve)
