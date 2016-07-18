@@ -121,7 +121,7 @@ mkdir -p $CACHE_DIR/node
 if [ ! -e $BUILD_DIR/Procfile ]; then
   NPM_START=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .scripts.start)
   echo "-----> No Procfile found, adding npm start value to new Procfile"
-  echo "web: foreman start" > $BUILD_DIR/Procfile
+  echo "web: npm start" > $BUILD_DIR/Procfile
 else
   echo "-----> Procfile exists"
 fi
