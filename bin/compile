@@ -118,6 +118,7 @@ rm -rf $CACHE_DIR/node_modules
 rm -rf $CACHE_DIR/node
 mkdir -p $CACHE_DIR/node
 
+# This is only needed if we decide to switch back to running a Node server
 # if [ ! -e $BUILD_DIR/Procfile ]; then
 #   NPM_START=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .scripts.start)
 #   echo "-----> No Procfile found, adding npm start value to new Procfile"
