@@ -118,13 +118,13 @@ rm -rf $CACHE_DIR/node_modules
 rm -rf $CACHE_DIR/node
 mkdir -p $CACHE_DIR/node
 
-if [ ! -e $BUILD_DIR/Procfile ]; then
-  NPM_START=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .scripts.start)
-  echo "-----> No Procfile found, adding npm start value to new Procfile"
-  echo "web: npm start" > $BUILD_DIR/Procfile
-else
-  echo "-----> Procfile exists"
-fi
+# if [ ! -e $BUILD_DIR/Procfile ]; then
+#   NPM_START=$(cat $BUILD_DIR/package.json | $BP_DIR/vendor/jq -r .scripts.start)
+#   echo "-----> No Procfile found, adding npm start value to new Procfile"
+#   echo "web: npm start" > $BUILD_DIR/Procfile
+# else
+#   echo "-----> Procfile exists"
+# fi
 
 # If the app has node modules, cache it
 if test -d $BUILD_DIR/node_modules; then
@@ -165,4 +165,4 @@ echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:\
   fi
 ) &
 
-# From this point on, we will host via static-build
+# From this point on, we will host via node server
