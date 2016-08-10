@@ -4,6 +4,6 @@
   "clean_urls": true,
 
   "headers": {
-    "/assets/**":  { "Cache-control": "public, max-age=512000" }
+    "/assets/**":  { "Cache-control": "public, max-age=300" }
   }
 }
