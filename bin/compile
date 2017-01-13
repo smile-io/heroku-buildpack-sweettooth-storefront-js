@@ -148,22 +148,22 @@ echo "-----> Building runtime environment"
 mkdir -p $BUILD_DIR/.profile.d
 echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:\$PATH\";" > $BUILD_DIR/.profile.d/nodejs.sh
 
-# Check and run gulp
+# Check and build with webpack
 (
-  if [ -f $BUILD_DIR/gulpfile.js ]; then
-    # Get the env vars
-    if [ -d $ENV_DIR ]; then
-      echo "-----> Exporting config vars to environment"
-      export_env_dir $ENV_DIR
-    fi
+    if [ -f $BUILD_DIR/webpack.production.config.js ]; then
+	# Get the env vars
+	if [ -d $ENV_DIR ]; then
+	    echo "-----> Exporting config vars to environment"
+	    export_env_dir $ENV_DIR
+	fi
 
-    # Install gulp locally
-    npm install gulp
-    echo "-----> Found gulpfile, running herkou:$NODE_ENV task"
-    $BUILD_DIR/node_modules/.bin/gulp heroku:$NODE_ENV
-  else
-    echo ":*: No gulpfile found :*:"
-  fi
+	# Install webpack
+	npm install webpack
+	echo "-----> Found webpack config, running heroku-postbuild task"
+	npm run heroku-postbuild
+    else
+	echo "<=> No webpack config found <=>"
+    fi
 ) &
 
-# From this point on, we will host via node server
+# From this point on, nginx will serve static files
