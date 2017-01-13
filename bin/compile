@@ -103,7 +103,7 @@ fi
   if [ -e "$BUILD_DIR/.npmrc" ]; then
     npm install --userconfig $BUILD_DIR/.npmrc --production 2>&1 | indent
   else
-    npm install --production 2>&1 | indent
+    npm install 2>&1 | indent
   fi
 )
 
