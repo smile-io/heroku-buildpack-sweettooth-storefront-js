@@ -157,8 +157,6 @@ echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:\
 	    export_env_dir $ENV_DIR
 	fi
 
-	# Install webpack
-	npm install webpack
 	echo "-----> Found webpack config, running heroku-postbuild task"
 	npm run heroku-postbuild
     else
