@@ -4,6 +4,12 @@
   "clean_urls": true,
 
   "headers": {
-    "/assets/**":  { "Cache-control": "public, max-age=300" }
+    "/assets/**":  { "Cache-control": "public, max-age=300" },
+    "/assets/*.js": {
+      "Content-type": "text/javascript"
+    },
+    "/assets/*.css": {
+      "Content-Type": "text/css"
+    }
   }
 }
