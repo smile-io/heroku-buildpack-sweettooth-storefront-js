@@ -129,7 +129,7 @@ mkdir -p $CACHE_DIR/node
 
 # If the app has node modules, cache it
 if test -d $BUILD_DIR/node_modules; then
-  echo "-----> Caching node_modules directory for the fuuuuuture"
+  echo "-----> Caching node_modules directory for the future"
   cp -r $BUILD_DIR/node_modules $CACHE_DIR/node
 fi
 
