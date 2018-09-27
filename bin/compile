@@ -149,20 +149,19 @@ mkdir -p $BUILD_DIR/.profile.d
 echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:\$PATH\";" > $BUILD_DIR/.profile.d/nodejs.sh
 
 # Check and build with webpack
-(
-    if [ -f $BUILD_DIR/webpack.production.config.js ]; then
-	# Get the env vars
-	if [ -d $ENV_DIR ]; then
-	    echo "-----> Exporting config vars to environment"
-	    export_env_dir $ENV_DIR
 
-            echo "-----> Found webpack config, running heroku-postbuild task"
-            npm run heroku-postbuild
-	fi
+if [ -f $BUILD_DIR/webpack.production.config.js ]; then
+    # Get the env vars
+    if [ -d $ENV_DIR ]; then
+	echo "-----> Exporting config vars to environment (2)"
+	export_env_dir $ENV_DIR
 
-    else
-	echo "<=> No webpack config found <=>"
+        echo "-----> Found webpack config, running heroku-postbuild task"
+        npm run heroku-postbuild
     fi
-) &
+
+else
+    echo "<=> No webpack config found <=>"
+fi
 
 # From this point on, nginx will serve static files
